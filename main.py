@@ -1,3 +1,5 @@
+import time
+
 from selenium import webdriver
 from selenium import common
 import func_timeout
@@ -126,6 +128,7 @@ def main(check_in_time: str, username: str, password: str, bbt: str, headless: b
         download_chrome_driver()
 
     while True:
+        time.sleep(0.5)
         if str(datetime.datetime.now().time())[:8] == check_in_time:
             driver = None
             try:

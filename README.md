@@ -28,3 +28,4 @@ pip install -r requirements.txt -i https://pypi.douban.com/simple
 pythonw main.py check_in_time(09:30:00) username(220190785) password(123456) bbt(36.2)
 ```
 
+Then the program will perform health check-in at 09:30:00 every day (please make sure the program is running at that time), with pythonw you can hide the background

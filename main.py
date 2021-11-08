@@ -21,7 +21,7 @@ def send_massage(content: str):
     print(content)
 
 
-@func_timeout.func_set_timeout(30)
+@func_timeout.func_set_timeout(60)
 def download_chrome_driver():
     """
     下载Chrome引擎
@@ -41,7 +41,7 @@ def download_chrome_driver():
             chrome_version = '.'.join(chrome_version.split('.')[:-1]) + '.' + str(int(chrome_version.split('.')[-1]) - 1)
 
 
-@func_timeout.func_set_timeout(60)
+@func_timeout.func_set_timeout(120)
 def check_in(driver: webdriver, username: str, password: str, bbt: str) -> int:
     """
     自动上报
@@ -104,6 +104,16 @@ def check_in(driver: webdriver, username: str, password: str, bbt: str) -> int:
         return -1
 
 
+@func_timeout.func_set_timeout(600)
+def try_to_check_in(driver, username, password, bbt):
+    try:
+        content = '{} {} 上报{}！'.format(username, datetime.datetime.now().today(), '成功' if check_in(driver, username, password, bbt) == 0 else '失败')
+    except func_timeout.exceptions.FunctionTimedOut:
+        print('{} {} 上报失败，正在重试...'.format(username, datetime.datetime.now().today()))
+        content = try_to_check_in(driver, username, password, bbt)
+    return content
+
+
 def main(check_in_time: str, username: str, password: str, bbt: str, headless: bool):
     """
     定时运行
@@ -145,7 +155,7 @@ def main(check_in_time: str, username: str, password: str, bbt: str, headless: b
                 print(e)
 
             try:
-                content = '{} {} 上报{}！'.format(username, datetime.datetime.now().today(), '成功' if check_in(driver, username, password, bbt) == 0 else '失败')
+                content = try_to_check_in(driver, username, password, bbt)
             except func_timeout.exceptions.FunctionTimedOut:
                 content = '{} {} 上报失败！'.format(username, datetime.datetime.now().today())
 

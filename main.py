@@ -34,6 +34,7 @@ def download_chrome_driver():
     :return: None
     """
     chrome_version = winreg.QueryValueEx(winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Google\Chrome\BLBeacon'), 'version')[0]
+
     while True:
         res = requests.get('https://npm.taobao.org/mirrors/chromedriver/{}/chromedriver_win32.zip'.format(chrome_version), stream=True)
         if res.status_code == 200:
@@ -58,7 +59,7 @@ def check_in(driver: webdriver, username: str, password: str, bbt: str):
     :param bbt: 上报体温值
     :return: None
     """
-    # 登录界面
+    '''登录界面'''
     driver.get('http://ehall.seu.edu.cn/appShow?appId=5821102911870447')
 
     while (len(driver.find_elements_by_id('username')) == 0 or len(driver.find_elements_by_id('password')) == 0 or len(driver.find_elements_by_class_name('auth_login_btn')) == 0) \
@@ -75,13 +76,13 @@ def check_in(driver: webdriver, username: str, password: str, bbt: str):
         button_xsfw = driver.find_element_by_class_name('auth_login_btn')
         button_xsfw.click()
 
-    # 每日健康申报界面
+    '''每日健康申报界面'''
     while len(driver.find_elements_by_xpath('/html/body/main/article/section/div[2]/div[1]')) == 0:
         pass
     button_add = driver.find_element_by_xpath('/html/body/main/article/section/div[2]/div[1]')
     button_add.click()
 
-    # 新增上报界面
+    '''新增上报界面'''
     while (len(driver.find_elements_by_name('DZ_JSDTCJTW')) == 0 or len(driver.find_elements_by_id('save')) == 0) and len(driver.find_elements_by_class_name('bh-dialog-center')) == 0:
         pass
 
@@ -95,7 +96,7 @@ def check_in(driver: webdriver, username: str, password: str, bbt: str):
         driver.quit()
         return
 
-    # 填写体温并提交
+    '''填写体温并提交'''
     input_bbt = driver.find_element_by_name('DZ_JSDTCJTW')
     input_bbt.click()
     input_bbt.send_keys(bbt)
@@ -119,6 +120,7 @@ def try_to_check_in(driver: webdriver, username: str, password: str, bbt: str) -
     :return: 运行结果 0 成功 -1 失败
     """
     global MAX_RETRIES
+
     try:
         check_in(driver, username, password, bbt)
         return 0
@@ -144,11 +146,11 @@ def main(check_in_time: str, username: str, password: str, bbt: str, headless: b
     :param headless: 是否隐藏浏览器界面
     :return: None
     """
-    # 检测引擎存在
+    '''检测引擎存在'''
     if not os.path.exists('chromedriver.exe'):
         download_chrome_driver()
 
-    # 检测引擎版本
+    '''检测引擎版本'''
     try:
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
@@ -161,8 +163,9 @@ def main(check_in_time: str, username: str, password: str, bbt: str, headless: b
         time.sleep(0.5)
         if str(datetime.datetime.now().time())[:8] == check_in_time:
             driver = None
+
+            '''初始化引擎'''
             try:
-                # 初始化引擎
                 options = webdriver.ChromeOptions()
                 options.add_experimental_option('excludeSwitches', ['enable-automation'])
                 options.add_argument('--disable-blink-features=AutomationControlled')
@@ -174,17 +177,20 @@ def main(check_in_time: str, username: str, password: str, bbt: str, headless: b
             except Exception as e:
                 logger.error(e)
 
+            '''尝试自动上报'''
             try:
                 res = try_to_check_in(driver, username, password, bbt)
                 content = '{} {} 上报{}！'.format(username, datetime.datetime.now().today(), '成功' if res == 0 else '失败')
             except func_timeout.exceptions.FunctionTimedOut:
                 content = '{} {} 上报失败！'.format(username, datetime.datetime.now().today())
 
+            '''关闭引擎'''
             try:
                 driver.quit()
             except Exception as e:
                 logger.error(e)
 
+            '''发送短信/邮件'''
             try:
                 send_massage(content)
             except Exception as e:

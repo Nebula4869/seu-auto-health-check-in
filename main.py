@@ -98,10 +98,10 @@ def check_in(driver: webdriver, username: str, password: str, bbt: str):
 
     '''填写体温并提交'''
     input_bbt = driver.find_element_by_name('DZ_JSDTCJTW')
-    input_bbt.click()
+    driver.execute_script("arguments[0].click();", input_bbt)
     input_bbt.send_keys(bbt)
     button_save = driver.find_element_by_id('save')
-    button_save.click()
+    driver.execute_script("arguments[0].click();", button_save)
 
     while len(driver.find_elements_by_class_name('bh-bg-primary')) == 0:
         pass
